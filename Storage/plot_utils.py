@@ -1,6 +1,7 @@
 import matplotlib.pyplot as plt
 import numpy as np
 
+
 def plotting(X, T, Exact, u_pred, problem, optimizer):
     PATH = './Results/%s/%s' % (problem, optimizer)
     fig = plt.figure(figsize=(6, 5))

@@ -2,16 +2,17 @@ import os
 import time
 import shutil
 
-def mkdir(Nf, act, iter, PATH):
-    '''
-    创建以Nfxx_tanh_iterxxx命名的文件夹
-    :param Nf:
+
+def mkdir(nf, act, iters, PATH):
+    """
+    创建以Nf5000_tanh_iter31331命名的文件夹
+    :param nf:
     :param act:
-    :param iter:
+    :param iters:
     :param PATH:    父文件夹
     :return:
-    '''
-    new_path = PATH + "/Nf%d_%s_iter%d"%(Nf, act, iter)
+    """
+    new_path = PATH + "/Nf%d_%s_iter%d" % (nf, act, iters)
     folder = os.path.exists(new_path)
     if not folder:
         os.makedirs(new_path)
@@ -24,31 +25,33 @@ def mkdir(Nf, act, iter, PATH):
         print("mkdir done!")
     return new_path
 
+
 def movefiles(old, new):
-    '''
+    """
     将生成在父目录的文件全部移动到mkdir函数创建的新文件夹中
     :param old:
     :param new:
     :return:
-    '''
-    filelist = os.listdir(old)
-    for file in filelist:
+    """
+    file_list = os.listdir(old)
+    for file in file_list:
         src = old + "/" + file
         if os.path.isfile(src):
             dst = new + "/" + file
             shutil.move(src, dst)
     print("files moved done!")
 
-def arrangeFiles(model, iter, problem, optimizer):
-    '''
+
+def arrangeFiles(model, iters, problem, optimizer):
+    """
     整理文件夹
     :param model:
-    :param iter:
+    :param iters:
     :param problem:
     :param optimizer:
     :return:
-    '''
-    PATH = "./Results/%s/%s"%(problem, optimizer)
-    new = mkdir(model.Nf, model.activation._tf_api_names[-1], iter, PATH)
+    """
+    PATH = "./Results/%s/%s" % (problem, optimizer)
+    new = mkdir(model.Nf, model.activation._tf_api_names[-1], iters, PATH)
     movefiles(PATH, new)
     print("File arranged done!")
