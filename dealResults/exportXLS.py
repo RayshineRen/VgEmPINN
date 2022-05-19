@@ -35,11 +35,11 @@ def export_xls_file(problem, optimizer):
     sh1 = wb.add_sheet('Error')
     sh2 = wb.add_sheet('trainingTime')
     for j in range(len(Nfs)):
-        sh1.write(0, j + 1, Nfs[i])
-        sh2.write(0, j + 1, Nfs[i])
+        sh1.write(0, j + 1, Nfs[j])
+        sh2.write(0, j + 1, Nfs[j])
 
-    # 将所有模型的所有Nf点的实验结果导出
-    root = '..'
+    # 将test目录下的所有模型的所有Nf点的实验结果导出
+    root = '../test'
     target = 'Results/%s/%s' % (problem, optimizer)
     root_list = os.listdir(root)
     model_index = 0
@@ -68,7 +68,7 @@ def export_xls_file(problem, optimizer):
                             PATH_nn = PATH_new + '/' + resultFile
                             with open(PATH_nn) as f:
                                 lines = f.readlines()
-                                res_dict = res_dict(lines)
+                                res_dict = result_dict(lines)
                                 # 写入结果
                                 sh1.write(model_index, Nf_col[res_dict['Nf']],
                                           float(res_dict['L2 error']))
@@ -79,8 +79,8 @@ def export_xls_file(problem, optimizer):
 
 
 if __name__ == '__main__':
-    # problem = "burgers"
-    prob = "possion"
+    prob = "burgers"
+    # prob = "possion"
     opt = "Adam_BFGS"
     # possion方程的Nf点设置
     if prob == "possion":
