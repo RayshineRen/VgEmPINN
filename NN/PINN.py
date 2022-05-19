@@ -46,7 +46,7 @@ class PhysicsInformedNN:
         self.loss_log = []
         self.loss_r_log = []
         self.loss_b_log = []
-        self.Nf = x_res.shape[0] - x_ibc.shape[0]  # 用于写入log.txt文件
+        self.Nf = x_res.shape[0]  # 用于写入log.txt文件
         self.activation = activation
         self.opt = opt                             # 优化器选取
         self.extended = extended                   # 扩维方式
