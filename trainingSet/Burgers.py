@@ -9,6 +9,10 @@ class BurgersData:
         self.load_data()
 
     def load_data(self):
+        """
+        导入Burgers方程的数值解
+        :return:
+        """
         path = r"D:\Documents\grade4term2\Graduate\VgEmPINN\Data"
         data = scipy.io.loadmat(path + "/burgers_shock.mat")
         x = data['x'].flatten()[:, None]
@@ -40,6 +44,11 @@ class BurgersData:
         print("Burgers data loaded!")
 
     def generate_res_data(self, n_f):
+        """
+        生成collocation points
+        :param n_f:
+        :return:
+        """
         x_f = self.lb + (self.ub - self.lb) * lhs(2, n_f)
         x_f = np.vstack((x_f, self.x_u_train))
         self.x_f = x_f
