@@ -1,5 +1,11 @@
 import numpy as np
 from pyDOE import lhs
+from scipy.interpolate import griddata
+import os
+from storage_utils import dumpTotalLoss
+from log_utils import logTime, logRelativeError
+from plot_utils import plotting
+from file_utils import arrangeFiles
 
 
 def u_ext(x, y):
@@ -19,6 +25,7 @@ class PossionData:
         self.x_r = x_r
         self.y_l = y_l
         self.y_h = y_h
+        self.problem = "possion"
 
     def generate_ibc(self, n_u):
         """
@@ -61,3 +68,30 @@ class PossionData:
         lb = np.array([self.x_l, self.y_l])
         ub = np.array([self.x_r, self.y_h])
         self.x_f = lb + (ub - lb) * lhs(2, n_f)
+
+    def run_model(self, model, n_test=100):
+        """
+        在possion数据集上训练模型
+        :param model:
+        :param n_test:
+        :return:
+        """
+        model.train()
+        # Test point
+        x = np.linspace(self.x_l, self.x_r, n_test)
+        y = np.linspace(self.y_l, self.y_h, n_test)
+        X, Y = np.meshgrid(x, y)
+        u = u_ext(X, Y)
+        data = np.hstack([X.flatten()[:, None], Y.flatten()[:, None]])
+        u_pred = model.predict(np.hstack((X.flatten()[:, None], Y.flatten()[:, None])))
+        U_pred = griddata(data, u_pred.flatten(), (X, Y), method='cubic')
+        error_u = np.linalg.norm(u_pred - u.flatten()[:, None]) / np.linalg.norm(u.flatten()[:, None])
+        # 将数据记录到磁盘中
+        if not os.path.exists("./Results/%s/%s" % (self.problem, model.opt)):
+            os.makedirs("./Results/%s/%s" % (self.problem, model.opt))
+        logTime(model, self.problem, model.opt)
+        logRelativeError(model, error_u, self.problem, model.opt)
+        plotting(X, Y, u.T, U_pred.T, self.problem, model.opt)
+        dumpTotalLoss(model, self.problem, model.opt)
+        niter = len(model.loss_log)
+        arrangeFiles(model, niter, self.problem, model.opt)
