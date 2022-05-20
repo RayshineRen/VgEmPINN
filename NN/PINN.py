@@ -126,21 +126,45 @@ class PhysicsInformedNN:
         f = u_t + u * u_x - 0.01 / np.pi * u_xx
         return f
 
-    def callback(self, loss_value, loss_valueb, loss_valuer):
+    def callback(self, *loss):
         """
         BFGS优化器callback函数
-        :param loss_value:
-        :param loss_valueb:
-        :param loss_valuer:
+        :param loss:
         :return:
         """
+        loss_value, loss_valueb, loss_valuer, *unpacked = loss  # 先解包所有模型都有的loss部分
         self.loss_log.append(loss_value)
         self.loss_b_log.append(loss_valueb)
         self.loss_r_log.append(loss_valuer)
         iters = len(self.loss_log)
-        if iters % 1000 == 0:
-            str_print = 'It: %d, Lossb: %.3e, Lossr: %.3e'
-            print(str_print % (iters, loss_valueb, loss_valuer))
+        str_print = 'It: %d, Lossb: %.3e, Lossr: %.3e'
+        # gPINN
+        if hasattr(self, 'loss_g') and not hasattr(self, 'loss_v'):
+            loss_valueg = unpacked[0]
+            self.loss_g_log.append(loss_valueg)
+            if iters % 500 == 0:
+                str_print += ", Lossg: %.3e"
+                print(str_print % (iters, loss_valueb, loss_valuer, loss_valueg))
+        # VPINN
+        elif hasattr(self, 'loss_v') and not hasattr(self, 'loss_g'):
+            loss_valuev = unpacked[0]
+            self.loss_v_log.append(loss_valuev)
+            if iters % 500 == 0:
+                str_print += ", Lossv: %.3e"
+                print(str_print % (iters, loss_valueb, loss_valuer, loss_valuev))
+        # VgPINN
+        elif hasattr(self, 'loss_g') and hasattr(self, 'loss_v'):
+            loss_valueg, loss_valuev = unpacked
+            self.loss_g_log.append(loss_valueg)
+            self.loss_v_log.append(loss_valuev)
+            if iters % 500 == 0:
+                str_print += ", Lossg: %.3e"
+                str_print += ", Lossv: %.3e"
+                print(str_print % (iters, loss_valueb, loss_valuer, loss_valueg, loss_valuev))
+        # PINN
+        else:
+            if iters % 500 == 0:
+                print(str_print % (iters, loss_valueb, loss_valuer))
 
     def optimize_bfgs(self, tf_dict, start_time):
         """
@@ -149,9 +173,20 @@ class PhysicsInformedNN:
         :param start_time:
         :return:
         """
+        fetches = [self.loss, self.loss_b, self.loss_r]
+        # gPINN
+        if hasattr(self, 'loss_g') and not hasattr(self, 'loss_v'):
+            fetches.append(self.loss_g)
+        # VPINN
+        elif hasattr(self, 'loss_v') and not hasattr(self, 'loss_g'):
+            fetches.append(self.loss_v)
+        # VgPINN
+        elif hasattr(self, 'loss_g') and hasattr(self, 'loss_v'):
+            fetches.append(self.loss_g)
+            fetches.append(self.loss_v)
         self.optimizer_BFGS.minimize(self.sess,
                                      feed_dict=tf_dict,
-                                     fetches=[self.loss, self.loss_b, self.loss_r],
+                                     fetches=fetches,
                                      loss_callback=self.callback)
         end_time = time.time()
         loss_value = self.sess.run(self.loss, tf_dict)
@@ -168,16 +203,42 @@ class PhysicsInformedNN:
         """
         for it in range(niter):
             self.sess.run(self.train_op_Adam, tf_dict)
+            # 先获取所有模型共有的loss
             loss_value = self.sess.run(self.loss, tf_dict)
             lb = self.sess.run(self.loss_b, tf_dict)
             lr = self.sess.run(self.loss_r, tf_dict)
             self.loss_log.append(loss_value)
             self.loss_b_log.append(lb)
             self.loss_r_log.append(lr)
-            if it % 1000 == 0:
-                elapsed = time.time() - start_time
-                str_print = 'It: %d, Lossb: %.3e, Lossr: %.3e, Time: %.2f'
-                print(str_print % (it, lb, lr, elapsed))
+            elapsed = time.time() - start_time
+            # gPINN
+            if hasattr(self, 'loss_g') and not hasattr(self, 'loss_v'):
+                lg = self.sess.run(self.loss_g, tf_dict)
+                self.loss_g_log.append(lg)
+                if it % 500 == 0:
+                    str_print = 'It: %d, Lossb: %.3e, Lossr: %.3e, Lossg: %.3e, Time: %.2f'
+                    print(str_print % (it, lb, lr, lg, elapsed))
+            # VPINN
+            if hasattr(self, 'loss_v') and not hasattr(self, 'loss_g'):
+                lv = self.sess.run(self.loss_v, tf_dict)
+                self.loss_v_log.append(lv)
+                if it % 500 == 0:
+                    str_print = 'It: %d, Lossb: %.3e, Lossr: %.3e, Lossv: %.3e, Time: %.2f'
+                    print(str_print % (it, lb, lr, lv, elapsed))
+            # VgPINN
+            if hasattr(self, 'loss_g') and hasattr(self, 'loss_v'):
+                lg = self.sess.run(self.loss_g, tf_dict)
+                lv = self.sess.run(self.loss_v, tf_dict)
+                self.loss_g_log.append(lg)
+                self.loss_v_log.append(lv)
+                if it % 500 == 0:
+                    str_print = 'It: %d, Lossb: %.3e, Lossr: %.3e, Lossg: %.3e, Lossv: %.3e, Time: %.2f'
+                    print(str_print % (it, lb, lr, lg, lv, elapsed))
+            # PINN
+            else:
+                if it % 500 == 0:
+                    str_print = 'It: %d, Lossb: %.3e, Lossr: %.3e, Time: %.2f'
+                    print(str_print % (it, lb, lr, elapsed))
         end_time = time.time()
         return end_time
 

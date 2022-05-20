@@ -1,11 +1,17 @@
 import scipy.io
 import numpy as np
 from pyDOE import lhs
+import os
+from storage_utils import dumpTotalLoss
+from log_utils import logTime, logRelativeError
+from plot_utils import plotting
+from file_utils import arrangeFiles
 
 
 class BurgersData:
     def __init__(self, n_u):
         self.load_data(n_u)
+        self.problem = "burgers"
 
     def load_data(self, n_u):
         """
@@ -52,3 +58,23 @@ class BurgersData:
         x_f = self.lb + (self.ub - self.lb) * lhs(2, n_f)
         # x_f = np.vstack((x_f, self.x_u_train))
         self.x_f = x_f
+
+    def run_model(self, model):
+        """
+        在burgers数据集上训练模型
+        :param model:
+        :return:
+        """
+        model.train()
+        u_pred = model.predict(self.x_star)
+        # 将数据记录到磁盘中
+        if not os.path.exists("./Results/%s/%s" % (self.problem, model.opt)):
+            os.makedirs("./Results/%s/%s" % (self.problem, model.opt))
+        error_u = np.linalg.norm(self.u_star - u_pred, 2) / np.linalg.norm(self.u_star, 2)
+        logTime(model, self.problem, model.opt)
+        logRelativeError(model, error_u, self.problem, model.opt)
+        u_pred = u_pred.reshape(-1, 256)
+        plotting(self.X, self.T, self.Exact, u_pred, self.problem, model.opt)
+        dumpTotalLoss(model, self.problem, model.opt)
+        niter = len(model.loss_log)
+        arrangeFiles(model, niter, self.problem, model.opt)

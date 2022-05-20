@@ -1,7 +1,3 @@
-import sys
-sys.path.insert(0, '../../Storage/')
-sys.path.insert(0, '../../NN/')
-sys.path.insert(0, '../../trainingSet/')
 import os
 os.environ["CUDA_VISIBLE_DEVICES"] = "-1"  # 这一行注释掉就是使用gpu，不注释就是使用cpu
 import tensorflow as tf
