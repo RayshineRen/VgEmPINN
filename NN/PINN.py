@@ -112,20 +112,6 @@ class PhysicsInformedNN:
         u = self.neural_net(tf.concat([x, t], 1), self.weights, self.biases)
         return u
 
-    def net_f(self, x, t):
-        """
-        f_NN 形式由 PDE决定
-        :param x:
-        :param t:
-        :return:
-        """
-        u = self.net_u(x, t)
-        u_t = tf.gradients(u, t)[0]
-        u_x = tf.gradients(u, x)[0]
-        u_xx = tf.gradients(u_x, x)[0]
-        f = u_t + u * u_x - 0.01 / np.pi * u_xx
-        return f
-
     def callback(self, *loss):
         """
         BFGS优化器callback函数

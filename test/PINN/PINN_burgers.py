@@ -4,11 +4,10 @@
 # sys.path.insert(0, '../../NN/')
 # sys.path.insert(0, '../../trainingSet/')
 import os
+
 os.environ["CUDA_VISIBLE_DEVICES"] = "-1"  # 这一行注释掉就是使用gpu，不注释就是使用cpu
 import tensorflow as tf
-from PINN import PhysicsInformedNN
-from Burgers import BurgersData
-
+from Burgers import BurgersData, PINN_burgers
 
 if __name__ == '__main__':
     # hyper parameters
@@ -24,6 +23,6 @@ if __name__ == '__main__':
     data = BurgersData(n_u)
     data.generate_res_data(n_f)
     # PINN for burgers' equation
-    model = PhysicsInformedNN(data.x_u_train, data.u_train, data.x_f, layers,
-                              maxIter, activation, lr, opt, extended)
+    model = PINN_burgers(data.x_u_train, data.u_train, data.x_f, layers,
+                         maxIter, activation, lr, opt, extended)
     data.run_model(model)

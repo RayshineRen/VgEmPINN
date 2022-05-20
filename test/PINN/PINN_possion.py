@@ -1,8 +1,8 @@
 import os
+
 os.environ["CUDA_VISIBLE_DEVICES"] = "-1"  # 这一行注释掉就是使用gpu，不注释就是使用cpu
 import tensorflow as tf
-from PINN import PhysicsInformedNN
-from Possion import PossionData
+from Possion import PossionData, PINN_possion
 
 
 if __name__ == '__main__':
@@ -24,6 +24,6 @@ if __name__ == '__main__':
     data.generate_ibc(n_u)
     data.generate_res(n_f)
     # PINN for possion equation
-    model = PhysicsInformedNN(data.x_u_train, data.u_train, data.x_f, layers,
-                              maxIter, activation, lr, opt, extended)
+    model = PINN_possion(data.x_u_train, data.u_train, data.x_f, layers,
+                         maxIter, activation, lr, opt, extended)
     data.run_model(model)
