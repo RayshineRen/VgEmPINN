@@ -205,14 +205,14 @@ class PhysicsInformedNN:
                     str_print = 'It: %d, Lossb: %.3e, Lossr: %.3e, Lossg: %.3e, Time: %.2f'
                     print(str_print % (it, lb, lr, lg, elapsed))
             # VPINN
-            if hasattr(self, 'loss_v') and not hasattr(self, 'loss_g'):
+            elif hasattr(self, 'loss_v') and not hasattr(self, 'loss_g'):
                 lv = self.sess.run(self.loss_v, tf_dict)
                 self.loss_v_log.append(lv)
                 if it % 500 == 0:
                     str_print = 'It: %d, Lossb: %.3e, Lossr: %.3e, Lossv: %.3e, Time: %.2f'
                     print(str_print % (it, lb, lr, lv, elapsed))
             # VgPINN
-            if hasattr(self, 'loss_g') and hasattr(self, 'loss_v'):
+            elif hasattr(self, 'loss_g') and hasattr(self, 'loss_v'):
                 lg = self.sess.run(self.loss_g, tf_dict)
                 lv = self.sess.run(self.loss_v, tf_dict)
                 self.loss_g_log.append(lg)
