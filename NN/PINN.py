@@ -3,6 +3,7 @@ import numpy as np
 import time
 
 
+# dtype=np.float64 使用32会在VPINN处报错
 def xavier_init(size):
     """
     xavier初始化
@@ -106,7 +107,7 @@ class PhysicsInformedNN:
         """
         u_NN
         :param x:
-        :param t:
+        :param y:
         :return:
         """
         u = self.neural_net(tf.concat([x, y], 1), self.weights, self.biases)
