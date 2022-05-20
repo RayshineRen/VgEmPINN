@@ -1,7 +1,9 @@
 from PINN import PhysicsInformedNN
+from Burgers import PINN_burgers
+from Possion import PINN_possion
 import tensorflow as tf
 import numpy as np
-from scipy.special import jacobi
+from scipy.special import gamma, jacobi, roots_jacobi
 
 
 def Jacobi(n, a, b, x):
@@ -31,6 +33,38 @@ def Test_fcn(N_test, x):
     return np.asarray(test_total)
 
 
+def GaussLobattoJacobiWeights(Q: int, a, b):
+    X = roots_jacobi(Q - 2, a + 1, b + 1)[0]
+    if a == 0 and b == 0:
+        W = 2 / ((Q - 1) * Q * (Jacobi(Q - 1, 0, 0, X) ** 2))
+        Wl = 2 / ((Q - 1) * Q * (Jacobi(Q - 1, 0, 0, -1) ** 2))
+        Wr = 2 / ((Q - 1) * Q * (Jacobi(Q - 1, 0, 0, 1) ** 2))
+    else:
+        W = 2 ** (a + b + 1) * gamma(a + Q) * gamma(b + Q) / (
+                (Q - 1) * gamma(Q) * gamma(a + b + Q + 1) * (Jacobi(Q - 1, a, b, X) ** 2))
+        Wl = (b + 1) * 2 ** (a + b + 1) * gamma(a + Q) * gamma(b + Q) / (
+                (Q - 1) * gamma(Q) * gamma(a + b + Q + 1) * (Jacobi(Q - 1, a, b, -1) ** 2))
+        Wr = (a + 1) * 2 ** (a + b + 1) * gamma(a + Q) * gamma(b + Q) / (
+                (Q - 1) * gamma(Q) * gamma(a + b + Q + 1) * (Jacobi(Q - 1, a, b, 1) ** 2))
+    W = np.append(W, Wr)
+    W = np.append(Wl, W)
+    X = np.append(X, 1)
+    X = np.append(-1, X)
+    return [X, W]
+
+
+def generate_quad_data(Nx_quad, Ny_quad):
+    [x_quad, w_quad_x] = GaussLobattoJacobiWeights(Nx_quad, 0, 0)
+    [y_quad, w_quad_y] = GaussLobattoJacobiWeights(Ny_quad, 0, 0)
+    # ++++++++++++++++++++++++++++
+    # Quadrature points
+    x_quad = x_quad[:, None]
+    w_quad_x = w_quad_x[:, None]
+    y_quad = y_quad[:, None]
+    w_quad_y = w_quad_y[:, None]
+    return x_quad, w_quad_x, y_quad, w_quad_y
+
+
 class VPINN(PhysicsInformedNN):
     def __init__(self, x_ibc, u, x_res, layers, maxIter, activation, lr, opt, extended,
                  x_quad, w_x_quad, y_quad, w_y_quad, f_exact_total, grid_x, grid_y):
@@ -42,7 +76,6 @@ class VPINN(PhysicsInformedNN):
         self.f_ext_total = f_exact_total  # f(x,y)即等号右侧 二重积分后的值
         self.grid_x = grid_x  # x维度分界点集合，VPINN中就是x的值域
         self.grid_y = grid_y  # y维度分界点集合，VPINN中就是y的值域
-        self.lossv = self.variational_loss()
 
     def net_du(self, x, y):
         """
@@ -57,6 +90,19 @@ class VPINN(PhysicsInformedNN):
         d2ux = tf.gradients(d1ux, x)[0]
         d2uy = tf.gradients(d1uy, y)[0]
         return d1ux, d2ux, d1uy, d2uy
+
+
+class VPINN_burgers(PINN_burgers, VPINN):
+    """
+    从PINN_burgers继承net_f
+    从VPINN继承__init__
+    """
+
+    def __init__(self, x_ibc, u, x_res, layers, maxIter, activation, lr, opt, extended,
+                 x_quad, w_x_quad, y_quad, w_y_quad, f_exact_total, grid_x, grid_y):
+        VPINN.__init__(self, x_ibc, u, x_res, layers, maxIter, activation, lr, opt, extended,
+                       x_quad, w_x_quad, y_quad, w_y_quad, f_exact_total, grid_x, grid_y)
+        self.lossv = self.variational_loss()
 
     def variational_loss(self):
         F_ext_element = self.f_ext_total[0]  # 定位子区域(VPINN只有一个区域)，此形式中f_ext恒0
@@ -86,6 +132,53 @@ class VPINN(PhysicsInformedNN):
                 inte2_x = jacobian_y * tf.reduce_sum(self.wquad_y * inte1_x * phi_y)
                 U_NN_element.append(inte2_x)
         U_NN_element = tf.reshape(U_NN_element, (-1, 1))
+        Res_NN_element = U_NN_element - F_ext_element
+        varloss = tf.reduce_mean(tf.square(Res_NN_element))
+        return varloss
+
+
+class VPINN_possion(PINN_possion, VPINN):
+    """
+    从PINN_possion继承net_f
+    从VPINN继承__init__
+    """
+
+    def __init__(self, x_ibc, u, x_res, layers, maxIter, activation, lr, opt, extended,
+                 x_quad, w_x_quad, y_quad, w_y_quad, f_exact_total, grid_x, grid_y):
+        VPINN.__init__(self, x_ibc, u, x_res, layers, maxIter, activation, lr, opt, extended,
+                       x_quad, w_x_quad, y_quad, w_y_quad, f_exact_total, grid_x, grid_y)
+        self.lossv = self.variational_loss()
+
+    def variational_loss(self):
+        F_ext_element = self.f_ext_total[0]  # 定位子区域(VPINN只有一个区域)，此形式中f_ext恒0
+        Ntest_element = int(np.sqrt(np.shape(F_ext_element)[0]))  # 子区域的测试函数个数 x=y
+        x_quad_element = tf.constant(self.grid_x[0] + (self.grid_x[1] - self.grid_x[0])
+                                     / 2 * (self.xquad + 1))  # 将求积点映射到子区域区间内
+        jacobian_x = (self.grid_x[1] - self.grid_x[0]) / 2  # 系数
+        # 测试函数及其微分 global(用xquad计算)
+        testx_quad_element = Test_fcn(Ntest_element, self.xquad)
+
+        y_quad_element = tf.constant(self.grid_y[0] + (self.grid_y[1] - self.grid_y[0])
+                                     / 2 * (self.yquad + 1))
+        jacobian_y = (self.grid_y[1] - self.grid_y[0]) / 2
+        testy_quad_element = Test_fcn(Ntest_element, self.yquad)
+        # PDE及其微分
+        d1ux_NN_quad_element, d2ux_NN_quad_element, \
+            d1uy_NN_quad_element, d2uy_NN_quad_element = self.net_du(x_quad_element, y_quad_element)
+        # 计算二重积分
+        U_NN_element_x = []
+        U_NN_element_y = []
+        for phi_y in testy_quad_element:
+            for phi_x in testx_quad_element:
+                inte1_x = jacobian_x * tf.reduce_sum(self.wquad_x * d2ux_NN_quad_element * phi_x)
+                inte1_y = jacobian_x * tf.reduce_sum(self.wquad_x * d2uy_NN_quad_element * phi_x)
+                inte2_x = jacobian_y * tf.reduce_sum(self.wquad_y * inte1_x * phi_y)
+                inte2_y = jacobian_y * tf.reduce_sum(self.wquad_y * inte1_y * phi_y)
+                U_NN_element_x.append(inte2_x)
+                U_NN_element_y.append(inte2_y)
+        U_NN_element_x = tf.reshape(U_NN_element_x, (-1, 1))
+        U_NN_element_y = tf.reshape(U_NN_element_y, (-1, 1))
+        U_NN_element = U_NN_element_x + U_NN_element_y
         Res_NN_element = U_NN_element - F_ext_element
         varloss = tf.reduce_mean(tf.square(Res_NN_element))
         return varloss

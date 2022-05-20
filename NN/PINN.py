@@ -11,8 +11,8 @@ def xavier_init(size):
     """
     in_dim = size[0]
     out_dim = size[1]
-    xavier_stddev = np.sqrt(2 / (in_dim + out_dim))
-    return tf.Variable(tf.truncated_normal([in_dim, out_dim], stddev=xavier_stddev), dtype=tf.float32)
+    xavier_stddev = np.sqrt(2 / (in_dim + out_dim), dtype=np.float64)
+    return tf.Variable(tf.truncated_normal([in_dim, out_dim], stddev=xavier_stddev, dtype=np.float64), dtype=tf.float64)
 
 
 def initialize_nn(layers):
@@ -26,7 +26,7 @@ def initialize_nn(layers):
     num_layers = len(layers)
     for layer in range(0, num_layers - 1):
         w = xavier_init(size=[layers[layer], layers[layer + 1]])
-        b = tf.Variable(tf.zeros([1, layers[layer + 1]], dtype=tf.float32), dtype=tf.float32)
+        b = tf.Variable(tf.zeros([1, layers[layer + 1]], dtype=tf.float64), dtype=tf.float64)
         weights.append(w)
         biases.append(b)
     return weights, biases
@@ -56,11 +56,11 @@ class PhysicsInformedNN:
 
         self.sess = tf.Session()
 
-        self.x_ibc_tf = tf.placeholder(tf.float32, shape=[None, self.x_ibc.shape[1]])
-        self.t_ibc_tf = tf.placeholder(tf.float32, shape=[None, self.t_ibc.shape[1]])
-        self.u_tf = tf.placeholder(tf.float32, shape=[None, self.u.shape[1]])
-        self.x_res_tf = tf.placeholder(tf.float32, shape=[None, self.x_res.shape[1]])
-        self.t_res_tf = tf.placeholder(tf.float32, shape=[None, self.t_res.shape[1]])
+        self.x_ibc_tf = tf.placeholder(tf.float64, shape=[None, self.x_ibc.shape[1]])
+        self.t_ibc_tf = tf.placeholder(tf.float64, shape=[None, self.t_ibc.shape[1]])
+        self.u_tf = tf.placeholder(tf.float64, shape=[None, self.u.shape[1]])
+        self.x_res_tf = tf.placeholder(tf.float64, shape=[None, self.x_res.shape[1]])
+        self.t_res_tf = tf.placeholder(tf.float64, shape=[None, self.t_res.shape[1]])
 
         self.u_pred = self.net_u(self.x_ibc_tf, self.t_ibc_tf)
         self.f_pred = self.net_f(self.x_res_tf, self.t_res_tf)
@@ -102,15 +102,24 @@ class PhysicsInformedNN:
         y = tf.add(tf.matmul(h, w), b)
         return y
 
-    def net_u(self, x, t):
+    def net_u(self, x, y):
         """
         u_NN
         :param x:
         :param t:
         :return:
         """
-        u = self.neural_net(tf.concat([x, t], 1), self.weights, self.biases)
+        u = self.neural_net(tf.concat([x, y], 1), self.weights, self.biases)
         return u
+
+    def net_f(self, x, t):
+        """
+        由PDE决定 重载
+        :param x:
+        :param t:
+        :return:
+        """
+        pass
 
     def callback(self, *loss):
         """

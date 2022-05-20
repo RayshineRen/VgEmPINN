@@ -1,5 +1,4 @@
 import os
-
 os.environ["CUDA_VISIBLE_DEVICES"] = "-1"  # 这一行注释掉就是使用gpu，不注释就是使用cpu
 import tensorflow as tf
 from Possion import PossionData, PINN_possion
