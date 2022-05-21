@@ -6,8 +6,6 @@ from storage_utils import dumpTotalLoss
 from log_utils import logTime, logRelativeError
 from plot_utils import plotting
 from file_utils import arrangeFiles
-from PINN import PhysicsInformedNN
-import tensorflow as tf
 
 
 class BurgersData:
