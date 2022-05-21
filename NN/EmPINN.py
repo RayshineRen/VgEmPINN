@@ -62,11 +62,17 @@ class EmPINN(PhysicsInformedNN):
             self.W1, self.b1, self.W2, self.b2 = initialize_mNN(self.layers)
         # PhysicsInformedNN.__init__会调用self.net_u,需要保证self.W1等属性已经在类中定义
         PhysicsInformedNN.__init__(self, x_ibc, u, x_res, layers, maxIter, activation, lr, opt, extended)
-        self.wb = 200
-        self.wr = 10
+        self.wb = 200  # IBC 权重
+        self.wr = 10  # res 权重
         self.loss = self.wb * self.loss_b + self.wr * self.loss_r
 
     def net_u(self, x, y):
+        """
+        Extended PINN
+        :param x:
+        :param y:
+        :return:
+        """
         if self.extended == "square":
             u = modified_neural_net(tf.concat([x, y, x ** 2, y ** 2], 1), self.weights, self.biases,
                                     self.activation, self.W1, self.b1, self.W2, self.b2)
@@ -101,7 +107,7 @@ class EmPINN_burgers(PINN_burgers, EmPINN):
 
 class EmPINN_possion(PINN_possion, EmPINN):
     """
-    从PINN_burgers继承net_f
+    从PINN_possion继承net_f
     从EmPINN继承新的属性, net_u, modified_neural_net
     """
     def __init__(self, x_ibc, u, x_res, layers, maxIter, activation, lr, opt, extended):
