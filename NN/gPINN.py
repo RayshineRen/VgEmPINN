@@ -6,7 +6,7 @@ import tensorflow as tf
 
 class gPINN(PhysicsInformedNN):
     def __init__(self, x_ibc, u, x_res, layers, maxIter, activation, lr, opt, extended, w_x, w_t):
-        super(gPINN, self).__init__(x_ibc, u, x_res, layers, maxIter, activation, lr, opt, extended)
+        PhysicsInformedNN.__init__(self, x_ibc, u, x_res, layers, maxIter, activation, lr, opt, extended)
         self.loss_g_log = []
         self.w_x = w_x
         self.w_t = w_t

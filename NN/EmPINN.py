@@ -61,7 +61,10 @@ class EmPINN(PhysicsInformedNN):
         self.weights, self.biases, \
             self.W1, self.b1, self.W2, self.b2 = initialize_mNN(self.layers)
         # PhysicsInformedNN.__init__会调用self.net_u,需要保证self.W1等属性已经在类中定义
-        super(EmPINN, self).__init__(x_ibc, u, x_res, layers, maxIter, activation, lr, opt, extended)
+        PhysicsInformedNN.__init__(self, x_ibc, u, x_res, layers, maxIter, activation, lr, opt, extended)
+        self.wb = 200
+        self.wr = 10
+        self.loss = self.wb * self.loss_b + self.wr * self.loss_r
 
     def net_u(self, x, y):
         if self.extended == "square":
@@ -91,17 +94,15 @@ class EmPINN_burgers(PINN_burgers, EmPINN):
     从PINN_burgers继承net_f
     从EmPINN继承新的属性, net_u, modified_neural_net
     """
-
     # 注意报错AttributeError: 'EmPINN_burgers' object has no attribute 'W1' 调用逻辑 EmPINN __init__函数
     def __init__(self, x_ibc, u, x_res, layers, maxIter, activation, lr, opt, extended):
         EmPINN.__init__(self, x_ibc, u, x_res, layers, maxIter, activation, lr, opt, extended)
 
 
-class EmPINN_possion(PINN_burgers, EmPINN):
+class EmPINN_possion(PINN_possion, EmPINN):
     """
     从PINN_burgers继承net_f
     从EmPINN继承新的属性, net_u, modified_neural_net
     """
-
     def __init__(self, x_ibc, u, x_res, layers, maxIter, activation, lr, opt, extended):
         EmPINN.__init__(self, x_ibc, u, x_res, layers, maxIter, activation, lr, opt, extended)

@@ -1,9 +1,10 @@
 import os
 os.environ["CUDA_VISIBLE_DEVICES"] = "-1"  # 这一行注释掉就是使用gpu，不注释就是使用cpu
 import tensorflow as tf
-from Possion import PossionData
-from VPINN import VPINN_possion, generate_quad_data
 import numpy as np
+from Possion import PossionData
+from VgEmPINN import VgEmPINN_possion
+from VPINN import generate_quad_data
 
 
 if __name__ == '__main__':
@@ -12,7 +13,8 @@ if __name__ == '__main__':
     n_u = 20
     n_f = 50
     n_test = 100
-    layers = [2] + [20] * 3 + [1]
+    # EmPINN
+    layers = [4] + [20] * 3 + [1]
     maxIter = 1000
     activation = tf.tanh
     [x_l, x_r] = [-1, 1]
@@ -20,6 +22,9 @@ if __name__ == '__main__':
     lr = 0.001
     opt = 'Adam_BFGS'
     extended = "square"
+    # gPINN
+    w_x = 0.001
+    w_t = 0.001
     # VPINN
     Nx_testfcn = 5
     Ny_testfcn = 5
@@ -34,8 +39,9 @@ if __name__ == '__main__':
     data = PossionData(x_l, x_r, y_l, y_h)
     data.generate_ibc(n_u)
     data.generate_res(n_f)
-    # PINN for possion equation
-    model = VPINN_possion(data.x_u_train, data.u_train, data.x_f, layers,
-                          maxIter, activation, lr, opt, extended,
-                          x_quad, w_quad_x, y_quad, w_quad_y, f_ext_total, grid_x, grid_y, data.problem)
+    # VgEmPINN for possion equation
+    model = VgEmPINN_possion(data.x_u_train, data.u_train, data.x_f, layers,
+                             maxIter, activation, lr, opt, extended,
+                             x_quad, w_quad_x, y_quad, w_quad_y, f_ext_total, grid_x, grid_y, data.problem,
+                             w_x, w_t)
     data.run_model(model)

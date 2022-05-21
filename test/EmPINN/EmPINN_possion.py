@@ -26,5 +26,5 @@ if __name__ == '__main__':
     data.generate_res(n_f)
     # EmPINN for possion equation
     model = EmPINN_possion(data.x_u_train, data.u_train, data.x_f, layers,
-                         maxIter, activation, lr, opt, extended)
+                           maxIter, activation, lr, opt, extended)
     data.run_model(model)
