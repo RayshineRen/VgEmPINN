@@ -1,6 +1,4 @@
 from PINN import PhysicsInformedNN
-from Burgers import PINN_burgers
-from Possion import PINN_possion
 import tensorflow as tf
 import numpy as np
 from scipy.special import gamma, jacobi, roots_jacobi
@@ -66,9 +64,9 @@ def generate_quad_data(Nx_quad, Ny_quad):
 
 
 class VPINN(PhysicsInformedNN):
-    def __init__(self, x_ibc, u, x_res, layers, maxIter, activation, lr, opt, extended,
-                 x_quad, w_x_quad, y_quad, w_y_quad, f_exact_total, grid_x, grid_y, prob):
-        PhysicsInformedNN.__init__(self, x_ibc, u, x_res, layers, maxIter, activation, lr, opt, extended)
+    def __init__(self, x_ibc, u, x_res, layers, maxIter, activation, lr, opt, prob,
+                 x_quad, w_x_quad, y_quad, w_y_quad, f_exact_total, grid_x, grid_y):
+        PhysicsInformedNN.__init__(self, x_ibc, u, x_res, layers, maxIter, activation, lr, opt, prob)
         self.xquad = x_quad  # x维度的求积点
         self.yquad = y_quad  # y维度的求积点
         self.wquad_x = w_x_quad  # x维度的权函数
@@ -76,7 +74,6 @@ class VPINN(PhysicsInformedNN):
         self.f_ext_total = f_exact_total  # f(x,y)即等号右侧 二重积分后的值
         self.grid_x = grid_x  # x维度分界点集合，VPINN中就是x的值域
         self.grid_y = grid_y  # y维度分界点集合，VPINN中就是y的值域
-        self.prob = prob  # problem
         self.NEx = grid_x.shape[0] - 1  # 将x维度分为NEx个区域
         self.NEy = grid_y.shape[0] - 1  # 将y维度分为NEy个区域
         self.loss_v_log = []
@@ -143,31 +140,9 @@ class VPINN(PhysicsInformedNN):
                     U_NN_element_x = tf.reshape(U_NN_element_x, (-1, 1))
                     U_NN_element_y = tf.reshape(U_NN_element_y, (-1, 1))
                     U_NN_element = U_NN_element_x + U_NN_element_y
+                else:
+                    U_NN_element = 0
                 Res_NN_element = U_NN_element - F_ext_element
                 varloss = tf.reduce_mean(tf.square(Res_NN_element))
                 varloss_total += varloss
         return varloss_total
-
-
-class VPINN_burgers(PINN_burgers, VPINN):
-    """
-    从PINN_burgers继承net_f
-    从VPINN继承__init__
-    """
-
-    def __init__(self, x_ibc, u, x_res, layers, maxIter, activation, lr, opt, extended,
-                 x_quad, w_x_quad, y_quad, w_y_quad, f_exact_total, grid_x, grid_y, prob):
-        VPINN.__init__(self, x_ibc, u, x_res, layers, maxIter, activation, lr, opt, extended,
-                       x_quad, w_x_quad, y_quad, w_y_quad, f_exact_total, grid_x, grid_y, prob)
-
-
-class VPINN_possion(PINN_possion, VPINN):
-    """
-    从PINN_possion继承net_f
-    从VPINN继承__init__
-    """
-
-    def __init__(self, x_ibc, u, x_res, layers, maxIter, activation, lr, opt, extended,
-                 x_quad, w_x_quad, y_quad, w_y_quad, f_exact_total, grid_x, grid_y, prob):
-        VPINN.__init__(self, x_ibc, u, x_res, layers, maxIter, activation, lr, opt, extended,
-                       x_quad, w_x_quad, y_quad, w_y_quad, f_exact_total, grid_x, grid_y, prob)

@@ -3,9 +3,8 @@ os.environ["CUDA_VISIBLE_DEVICES"] = "-1"  # 这一行注释掉就是使用gpu�
 import tensorflow as tf
 import numpy as np
 from Possion import PossionData
-from VgEmPINN import VgEmPINN_possion
+from VgEmPINN import VgEmPINN
 from VPINN import generate_quad_data
-
 
 if __name__ == '__main__':
     # hyper parameter
@@ -40,8 +39,8 @@ if __name__ == '__main__':
     data.generate_ibc(n_u)
     data.generate_res(n_f)
     # VgEmPINN for possion equation
-    model = VgEmPINN_possion(data.x_u_train, data.u_train, data.x_f, layers,
-                             maxIter, activation, lr, opt, extended,
-                             x_quad, w_quad_x, y_quad, w_quad_y, f_ext_total, grid_x, grid_y, data.problem,
-                             w_x, w_t)
+    model = VgEmPINN(data.x_u_train, data.u_train, data.x_f, layers,
+                     maxIter, activation, lr, opt, extended,
+                     x_quad, w_quad_x, y_quad, w_quad_y, f_ext_total, grid_x, grid_y, problem,
+                     w_x, w_t)
     data.run_model(model)

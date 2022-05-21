@@ -1,13 +1,14 @@
 import os
+
 os.environ["CUDA_VISIBLE_DEVICES"] = "-1"  # 这一行注释掉就是使用gpu，不注释就是使用cpu
 import tensorflow as tf
 import numpy as np
-from VPINN import VPINN_burgers, generate_quad_data
+from VPINN import VPINN, generate_quad_data
 from Burgers import BurgersData
-
 
 if __name__ == '__main__':
     # hyper parameters
+    problem = "burgers"
     n_u = 100
     n_f = 500
     layers = [2] + [40] * 5 + [1]
@@ -15,7 +16,6 @@ if __name__ == '__main__':
     activation = tf.tanh
     lr = 0.001
     opt = "Adam_BFGS"
-    extended = "square"
     # VPINN
     NEx = 2
     NEy = 2
@@ -40,7 +40,7 @@ if __name__ == '__main__':
     data = BurgersData(n_u)
     data.generate_res_data(n_f)
     # PINN for burgers' equation
-    model = VPINN_burgers(data.x_u_train, data.u_train, data.x_f, layers,
-                          maxIter, activation, lr, opt, extended,
-                          x_quad, w_quad_x, y_quad, w_quad_y, F_ext_total, grid_x, grid_y)
+    model = VPINN(data.x_u_train, data.u_train, data.x_f, layers,
+                  maxIter, activation, lr, opt, problem,
+                  x_quad, w_quad_x, y_quad, w_quad_y, F_ext_total, grid_x, grid_y)
     data.run_model(model)

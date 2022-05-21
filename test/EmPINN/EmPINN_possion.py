@@ -2,8 +2,7 @@ import os
 os.environ["CUDA_VISIBLE_DEVICES"] = "-1"  # 这一行注释掉就是使用gpu，不注释就是使用cpu
 import tensorflow as tf
 from Possion import PossionData
-from EmPINN import EmPINN_possion
-
+from EmPINN import EmPINN
 
 if __name__ == '__main__':
     # hyper parameter
@@ -25,6 +24,6 @@ if __name__ == '__main__':
     data.generate_ibc(n_u)
     data.generate_res(n_f)
     # EmPINN for possion equation
-    model = EmPINN_possion(data.x_u_train, data.u_train, data.x_f, layers,
-                           maxIter, activation, lr, opt, extended)
+    model = EmPINN(data.x_u_train, data.u_train, data.x_f, layers,
+                   maxIter, activation, lr, opt, extended, problem)
     data.run_model(model)

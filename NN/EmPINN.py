@@ -1,5 +1,3 @@
-from Burgers import PINN_burgers
-from Possion import PINN_possion
 from PINN import PhysicsInformedNN, xavier_init
 import tensorflow as tf
 
@@ -56,12 +54,13 @@ def modified_neural_net(X, weights, biases, activation, W1, b1, W2, b2):
 
 
 class EmPINN(PhysicsInformedNN):
-    def __init__(self, x_ibc, u, x_res, layers, maxIter, activation, lr, opt, extended):
+    def __init__(self, x_ibc, u, x_res, layers, maxIter, activation, lr, opt, extended, prob):
         self.layers = layers
         self.weights, self.biases, \
             self.W1, self.b1, self.W2, self.b2 = initialize_mNN(self.layers)
+        self.extended = extended  # 扩维方式
         # PhysicsInformedNN.__init__会调用self.net_u,需要保证self.W1等属性已经在类中定义
-        PhysicsInformedNN.__init__(self, x_ibc, u, x_res, layers, maxIter, activation, lr, opt, extended)
+        PhysicsInformedNN.__init__(self, x_ibc, u, x_res, layers, maxIter, activation, lr, opt, prob)
         self.wb = 200  # IBC 权重
         self.wr = 10  # res 权重
         self.loss = self.wb * self.loss_b + self.wr * self.loss_r
@@ -93,22 +92,3 @@ class EmPINN(PhysicsInformedNN):
             u = modified_neural_net(tf.concat([x, y], 1), self.weights, self.biases,
                                     self.activation, self.W1, self.b1, self.W2, self.b2)
         return u
-
-
-class EmPINN_burgers(PINN_burgers, EmPINN):
-    """
-    从PINN_burgers继承net_f
-    从EmPINN继承新的属性, net_u, modified_neural_net
-    """
-    # 注意报错AttributeError: 'EmPINN_burgers' object has no attribute 'W1' 调用逻辑 EmPINN __init__函数
-    def __init__(self, x_ibc, u, x_res, layers, maxIter, activation, lr, opt, extended):
-        EmPINN.__init__(self, x_ibc, u, x_res, layers, maxIter, activation, lr, opt, extended)
-
-
-class EmPINN_possion(PINN_possion, EmPINN):
-    """
-    从PINN_possion继承net_f
-    从EmPINN继承新的属性, net_u, modified_neural_net
-    """
-    def __init__(self, x_ibc, u, x_res, layers, maxIter, activation, lr, opt, extended):
-        EmPINN.__init__(self, x_ibc, u, x_res, layers, maxIter, activation, lr, opt, extended)

@@ -79,22 +79,3 @@ class BurgersData:
         dumpTotalLoss(model, self.problem, model.opt)
         niter = len(model.loss_log)
         arrangeFiles(model, niter, self.problem, model.opt)
-
-
-class PINN_burgers(PhysicsInformedNN):
-    def __init__(self, x_ibc, u, x_res, layers, maxIter, activation, lr, opt, extended):
-        super(PINN_burgers, self).__init__(x_ibc, u, x_res, layers, maxIter, activation, lr, opt, extended)
-
-    def net_f(self, x, t):
-        """
-        f_NN 形式由 PDE决定
-        :param x:
-        :param t:
-        :return:
-        """
-        u = self.net_u(x, t)
-        u_t = tf.gradients(u, t)[0]
-        u_x = tf.gradients(u, x)[0]
-        u_xx = tf.gradients(u_x, x)[0]
-        f = u_t + u * u_x - 0.01 / np.pi * u_xx
-        return f

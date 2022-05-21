@@ -97,23 +97,3 @@ class PossionData:
         dumpTotalLoss(model, self.problem, model.opt)
         niter = len(model.loss_log)
         arrangeFiles(model, niter, self.problem, model.opt)
-
-
-class PINN_possion(PhysicsInformedNN):
-    def __init__(self, x_ibc, u, x_res, layers, maxIter, activation, lr, opt, extended):
-        super(PINN_possion, self).__init__(x_ibc, u, x_res, layers, maxIter, activation, lr, opt, extended)
-
-    def net_f(self, x, y):
-        """
-        f_NN 形式由 PDE决定 possion equation
-        :param x:
-        :param y:
-        :return:
-        """
-        u = self.net_u(x, y)
-        u_y = tf.gradients(u, y)[0]
-        u_x = tf.gradients(u, x)[0]
-        u_xx = tf.gradients(u_x, x)[0]
-        u_yy = tf.gradients(u_y, y)[0]
-        f = u_xx + u_yy
-        return f

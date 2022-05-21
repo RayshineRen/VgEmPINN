@@ -1,7 +1,8 @@
 import os
+
 os.environ["CUDA_VISIBLE_DEVICES"] = "-1"  # 这一行注释掉就是使用gpu，不注释就是使用cpu
 import tensorflow as tf
-from gPINN import gPINN_possion
+from gPINN import gPINN
 from Possion import PossionData
 
 if __name__ == '__main__':
@@ -17,7 +18,6 @@ if __name__ == '__main__':
     [y_l, y_h] = [-1, 1]
     lr = 0.001
     opt = 'Adam_BFGS'
-    extended = "square"
     w_x = 0.001
     w_y = 0.001
     # possion Data
@@ -25,6 +25,6 @@ if __name__ == '__main__':
     data.generate_ibc(n_u)
     data.generate_res(n_f)
     # PINN for possion equation
-    model = gPINN_possion(data.x_u_train, data.u_train, data.x_f, layers,
-                          maxIter, activation, lr, opt, extended, w_x, w_y)
+    model = gPINN(data.x_u_train, data.u_train, data.x_f, layers,
+                  maxIter, activation, lr, opt, problem, w_x, w_y)
     data.run_model(model)

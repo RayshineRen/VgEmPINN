@@ -1,10 +1,10 @@
 import os
+
 os.environ["CUDA_VISIBLE_DEVICES"] = "-1"  # 这一行注释掉就是使用gpu，不注释就是使用cpu
 import tensorflow as tf
 from Possion import PossionData
-from VPINN import VPINN_possion, generate_quad_data
+from VPINN import VPINN, generate_quad_data
 import numpy as np
-
 
 if __name__ == '__main__':
     # hyper parameter
@@ -19,7 +19,6 @@ if __name__ == '__main__':
     [y_l, y_h] = [-1, 1]
     lr = 0.001
     opt = 'Adam_BFGS'
-    extended = "square"
     # VPINN
     NEx = 2
     NEy = 2
@@ -43,7 +42,7 @@ if __name__ == '__main__':
     data.generate_ibc(n_u)
     data.generate_res(n_f)
     # PINN for possion equation
-    model = VPINN_possion(data.x_u_train, data.u_train, data.x_f, layers,
-                          maxIter, activation, lr, opt, extended,
-                          x_quad, w_quad_x, y_quad, w_quad_y, F_ext_total, grid_x, grid_y)
+    model = VPINN(data.x_u_train, data.u_train, data.x_f, layers,
+                  maxIter, activation, lr, opt, problem,
+                  x_quad, w_quad_x, y_quad, w_quad_y, F_ext_total, grid_x, grid_y)
     data.run_model(model)

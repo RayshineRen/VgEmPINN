@@ -3,11 +3,12 @@ os.environ["CUDA_VISIBLE_DEVICES"] = "-1"  # 这一行注释掉就是使用gpu�
 import tensorflow as tf
 import numpy as np
 from Burgers import BurgersData
-from VgEmPINN import VgEmPINN_burgers
+from VgEmPINN import VgEmPINN
 from VPINN import generate_quad_data
 
 if __name__ == '__main__':
     # hyper parameters
+    problem = "burgers"
     n_u = 100
     n_f = 500
     # Extended modified PINN
@@ -34,8 +35,8 @@ if __name__ == '__main__':
     data = BurgersData(n_u)
     data.generate_res_data(n_f)
     # VgEmPINN for burgers' equation
-    model = VgEmPINN_burgers(data.x_u_train, data.u_train, data.x_f, layers,
-                             maxIter, activation, lr, opt, extended,
-                             x_quad, w_quad_x, y_quad, w_quad_y, f_ext_total, grid_x, grid_y, data.problem,
-                             w_x, w_t)
+    model = VgEmPINN(data.x_u_train, data.u_train, data.x_f, layers,
+                     maxIter, activation, lr, opt, extended,
+                     x_quad, w_quad_x, y_quad, w_quad_y, f_ext_total, grid_x, grid_y, problem,
+                     w_x, w_t)
     data.run_model(model)

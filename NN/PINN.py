@@ -34,7 +34,7 @@ def initialize_nn(layers):
 
 
 class PhysicsInformedNN:
-    def __init__(self, x_ibc, u, x_res, layers, maxIter, activation, lr, opt, extended):
+    def __init__(self, x_ibc, u, x_res, layers, maxIter, activation, lr, opt, prob):
         # ibc points
         self.x_ibc = x_ibc[:, 0:1]
         self.t_ibc = x_ibc[:, 1:2]
@@ -50,7 +50,7 @@ class PhysicsInformedNN:
         self.Nf = x_res.shape[0]  # 用于写入log.txt文件
         self.activation = activation
         self.opt = opt                             # 优化器选取
-        self.extended = extended                   # 扩维方式
+        self.prob = prob                           # problem 定制 net_f
         self.training_time = 0
 
         self.weights, self.biases = initialize_nn(layers)
@@ -115,12 +115,28 @@ class PhysicsInformedNN:
 
     def net_f(self, x, t):
         """
-        由PDE决定 重载
+        由self.prob决定
         :param x:
         :param t:
         :return:
         """
-        pass
+        if self.prob == "burgers":
+            u = self.net_u(x, t)
+            u_t = tf.gradients(u, t)[0]
+            u_x = tf.gradients(u, x)[0]
+            u_xx = tf.gradients(u_x, x)[0]
+            f = u_t + u * u_x - 0.01 / np.pi * u_xx
+            return f
+        elif self.prob == "possion":
+            u = self.net_u(x, t)
+            u_t = tf.gradients(u, t)[0]
+            u_x = tf.gradients(u, x)[0]
+            u_xx = tf.gradients(u_x, x)[0]
+            u_tt = tf.gradients(u_t, t)[0]
+            f = u_xx + u_tt
+            return f
+        else:
+            print("Can't deal with this problem.")
 
     def callback(self, *loss):
         """
