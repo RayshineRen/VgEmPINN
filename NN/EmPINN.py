@@ -67,7 +67,7 @@ class EmPINN(PhysicsInformedNN):
 
     def net_u(self, x, y):
         """
-        Extended PINN
+        Expand PINN
         :param x:
         :param y:
         :return:
