@@ -3,6 +3,10 @@ import numpy as np
 import time
 
 
+np.random.seed(1234)
+tf.set_random_seed(1234)
+
+
 # dtype=np.float64 使用32会在VPINN处报错
 def xavier_init(size):
     """
